@@ -87,7 +87,19 @@ st.markdown("""
     html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
         background-color: #f0f4f2 !important;
         font-family: 'Plus Jakarta Sans', sans-serif !important;
-        color: #2c3e50;
+        color: #2c3e50 !important;
+    }
+
+    /* Force all text/labels to be dark and readable */
+    p, span, label, li, div {
+        color: #2c3e50 !important;
+    }
+    
+    /* Input field labels style */
+    label[data-testid="stWidgetLabel"] p, .stWidgetLabel, label {
+        color: #2c3e50 !important;
+        font-weight: 600 !important;
+        font-size: 0.95rem !important;
     }
 
     /* Sidebar Customization */
@@ -155,6 +167,66 @@ st.markdown("""
         border-radius: 6px !important;
     }
 
+    /* Force LIGHT styling for Input Fields and Text Areas */
+    div[data-baseweb="input"] {
+        background-color: #ffffff !important;
+        border: 1px solid #ccd9d4 !important;
+        border-radius: 10px !important;
+    }
+    div[data-baseweb="input"] input {
+        color: #2c3e50 !important;
+        background-color: #ffffff !important;
+    }
+    div[data-baseweb="textarea"] {
+        background-color: #ffffff !important;
+        border: 1px solid #ccd9d4 !important;
+        border-radius: 10px !important;
+    }
+    div[data-baseweb="textarea"] textarea {
+        color: #2c3e50 !important;
+        background-color: #ffffff !important;
+    }
+
+    /* Force LIGHT styling for Selectbox / Dropdowns */
+    div[data-baseweb="select"] {
+        background-color: #ffffff !important;
+        border: 1px solid #ccd9d4 !important;
+        border-radius: 10px !important;
+    }
+    div[data-baseweb="select"] > div {
+        background-color: transparent !important;
+    }
+    div[data-baseweb="select"] span, div[data-baseweb="select"] div[aria-selected="true"] {
+        color: #2c3e50 !important;
+    }
+    div[data-baseweb="select"] input {
+        color: #2c3e50 !important;
+    }
+    
+    /* Dropdown options popup styling */
+    ul[role="listbox"] {
+        background-color: #ffffff !important;
+    }
+    li[role="option"] {
+        color: #2c3e50 !important;
+        background-color: #ffffff !important;
+    }
+    li[role="option"]:hover {
+        background-color: #a8e6cf !important;
+        color: #1e8449 !important;
+    }
+
+    /* Warnings and Errors Styling (Force dark text color) */
+    div[data-testid="stNotification"] {
+        background-color: #ffffff !important;
+        border-radius: 12px !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.04) !important;
+        border: 1px solid #ccd9d4 !important;
+    }
+    div[data-testid="stNotification"] p, div[data-testid="stNotification"] span, div[data-testid="stNotification"] div {
+        color: #2c3e50 !important;
+    }
+
     /* Custom styled Premium Card containers */
     .pda-card {
         background: #ffffff;
@@ -201,11 +273,11 @@ st.markdown("""
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
-    .badge-dusuk { background-color: #e8f8f5; color: #2ecc71; }
-    .badge-orta { background-color: #ebf5fb; color: #3498db; }
-    .badge-yuksek { background-color: #fdf2f2; color: #e74c3c; }
-    .badge-completed { background-color: #f2f4f4; color: #7f8c8d; }
-    .badge-pending { background-color: #fef9e7; color: #f39c12; }
+    .badge-dusuk { background-color: #e8f8f5 !important; color: #2ecc71 !important; }
+    .badge-orta { background-color: #ebf5fb !important; color: #3498db !important; }
+    .badge-yuksek { background-color: #fdf2f2 !important; color: #e74c3c !important; }
+    .badge-completed { background-color: #f2f4f4 !important; color: #7f8c8d !important; }
+    .badge-pending { background-color: #fef9e7 !important; color: #f39c12 !important; }
 
     /* Custom headers and text */
     .card-title {
@@ -213,17 +285,17 @@ st.markdown("""
         font-weight: 700;
         margin-top: 10px;
         margin-bottom: 8px;
-        color: #2c3e50;
+        color: #2c3e50 !important;
     }
     .card-desc {
         font-size: 0.98rem;
-        color: #5d6d7e;
+        color: #5d6d7e !important;
         margin-bottom: 16px;
         line-height: 1.6;
     }
     .card-meta {
         font-size: 0.82rem;
-        color: #95a5a6;
+        color: #95a5a6 !important;
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -266,28 +338,28 @@ st.markdown("""
     .pomodoro-time {
         font-size: 4.8rem;
         font-weight: 700;
-        color: #2c3e50;
+        color: #2c3e50 !important;
         font-family: monospace;
         margin: 22px 0;
         letter-spacing: 3px;
     }
     
-    /* Input styling */
-    div[data-baseweb="input"] {
-        border-radius: 8px !important;
-    }
-    
-    /* Styled widgets */
-    .stButton>button {
-        border-radius: 10px !important;
-        font-weight: 600 !important;
-        transition: all 0.2s ease-in-out !important;
-    }
-    .stButton>button:hover {
+    /* Styled buttons and forms (including Form Submit Buttons) */
+    div.stButton > button, div.stFormSubmitButton > button, button[data-testid="stFormSubmitButton"] {
         background-color: #a8e6cf !important;
-        color: #1e8449 !important;
-        border-color: #a8e6cf !important;
+        color: #1e5631 !important;
+        border: 1px solid #a8e6cf !important;
+        border-radius: 10px !important;
+        font-weight: 700 !important;
+        transition: all 0.2s ease-in-out !important;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05) !important;
+    }
+    div.stButton > button:hover, div.stFormSubmitButton > button:hover, button[data-testid="stFormSubmitButton"]:hover {
+        background-color: #85e3b2 !important;
+        color: #113f21 !important;
+        border-color: #85e3b2 !important;
         transform: translateY(-1px);
+        box-shadow: 0 4px 10px rgba(168, 230, 207, 0.3) !important;
     }
 </style>
 """, unsafe_allow_html=True)
