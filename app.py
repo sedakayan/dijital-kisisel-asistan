@@ -41,6 +41,26 @@ except Exception as e:
     st.error(f"Servisler yüklenirken hata oluştu: {e}")
     logger.error(f"Initialization error: {e}")
 
+# Function to spawn the background notification scheduler
+def start_background_reminder_service():
+    import subprocess
+    import sys
+    try:
+        subprocess.Popen(
+            [sys.executable, "reminder_service.py"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
+        )
+        logger.info("Background reminder service spawned successfully.")
+    except Exception as e:
+        logger.error(f"Failed to start background reminder service: {e}")
+
+# Start the background service once per Streamlit session
+if "background_service_started" not in st.session_state:
+    start_background_reminder_service()
+    st.session_state.background_service_started = True
+
 # Desktop notification helper
 def send_desktop_notification(title, message):
     if PLYER_AVAILABLE:
