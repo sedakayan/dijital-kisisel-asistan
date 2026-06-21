@@ -6,7 +6,7 @@ import logging
 
 from database import DatabaseManager
 from models import Task, Note
-from services import TaskService, NoteService
+from services import TaskService, NoteService, AuthService
 
 # Setup logger
 logging.basicConfig(level=logging.INFO)
@@ -33,10 +33,11 @@ def get_services():
     db_manager = DatabaseManager()
     task_service = TaskService(db_manager)
     note_service = NoteService(db_manager)
-    return task_service, note_service
+    auth_service = AuthService(db_manager)
+    return task_service, note_service, auth_service
 
 try:
-    task_service, note_service = get_services()
+    task_service, note_service, auth_service = get_services()
 except Exception as e:
     st.error(f"Servisler yüklenirken hata oluştu: {e}")
     logger.error(f"Initialization error: {e}")
@@ -364,6 +365,61 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# ----------------- GİRİŞ / KAYIT EKRANI -----------------
+if "username" not in st.session_state:
+    st.markdown("""
+    <div class="pda-banner">
+        <h1>🎯 Kişisel Dijital Asistan</h1>
+        <p>Devam etmek için giriş yapın veya yeni bir hesap oluşturun</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    login_tab, register_tab = st.tabs(["🔑 Giriş Yap", "📝 Kayıt Ol"])
+
+    with login_tab:
+        with st.form("login_form"):
+            login_username = st.text_input("Kullanıcı Adı", key="login_username_input")
+            login_password = st.text_input("Şifre", type="password", key="login_password_input")
+            login_submitted = st.form_submit_button("Giriş Yap")
+
+            if login_submitted:
+                if not login_username.strip() or not login_password:
+                    st.error("Kullanıcı adı ve şifre boş bırakılamaz.")
+                else:
+                    try:
+                        if auth_service.login(login_username, login_password):
+                            st.session_state.username = login_username.strip()
+                            st.rerun()
+                        else:
+                            st.error("Kullanıcı adı veya şifre hatalı.")
+                    except Exception as e:
+                        st.error(f"Giriş sırasında hata oluştu: {e}")
+
+    with register_tab:
+        with st.form("register_form"):
+            reg_username = st.text_input("Kullanıcı Adı", key="reg_username_input")
+            reg_password = st.text_input("Şifre", type="password", key="reg_password_input")
+            reg_password_confirm = st.text_input("Şifre (Tekrar)", type="password", key="reg_password_confirm_input")
+            register_submitted = st.form_submit_button("Hesap Oluştur")
+
+            if register_submitted:
+                if not reg_username.strip() or not reg_password:
+                    st.error("Kullanıcı adı ve şifre boş bırakılamaz.")
+                elif reg_password != reg_password_confirm:
+                    st.error("Şifreler birbiriyle eşleşmiyor.")
+                else:
+                    try:
+                        if auth_service.register(reg_username, reg_password):
+                            st.success("Hesabınız oluşturuldu! Şimdi 'Giriş Yap' sekmesinden giriş yapabilirsiniz.")
+                        else:
+                            st.error("Bu kullanıcı adı zaten alınmış. Lütfen başka bir kullanıcı adı deneyin.")
+                    except Exception as e:
+                        st.error(f"Kayıt sırasında hata oluştu: {e}")
+
+    st.stop()
+
+username = st.session_state.username
+
 # App Title & Branding (Premium Banner)
 st.markdown("""
 <div class="pda-banner">
@@ -371,6 +427,13 @@ st.markdown("""
     <p>Yapay Zeka Destekli Modüler Çalışma ve Üretkenlik Portalı</p>
 </div>
 """, unsafe_allow_html=True)
+
+# Sidebar: logged-in user info & logout
+st.sidebar.markdown(f"### 👤 Hoş geldin, **{username}**")
+if st.sidebar.button("🚪 Çıkış Yap", use_container_width=True):
+    del st.session_state.username
+    st.rerun()
+st.sidebar.markdown("---")
 
 # ----------------- SESSION STATE FOR POMODORO & NOTIFICATIONS -----------------
 if "timer_seconds" not in st.session_state:
@@ -386,10 +449,10 @@ if "notification_sent" not in st.session_state:
 
 # Fetch current counts for Dashboard Metrics & Progress Bar
 try:
-    all_tasks = task_service.get_all_tasks()
+    all_tasks = task_service.get_all_tasks(username)
     total_tasks = len(all_tasks)
-    pending_tasks = len(task_service.get_pending_tasks())
-    completed_tasks = len(task_service.get_completed_tasks())
+    pending_tasks = len(task_service.get_pending_tasks(username))
+    completed_tasks = len(task_service.get_completed_tasks(username))
 except Exception as e:
     total_tasks, pending_tasks, completed_tasks = 0, 0, 0
     all_tasks = []
@@ -411,8 +474,8 @@ st.write("")
 
 # 2. AKILLI UYARI SİSTEMİ & MASAÜSTÜ BİLDİRİMİ (DEADLINE ALERT)
 try:
-    today_urgent_tasks = task_service.get_tasks_due_today()
-    tomorrow_urgent_tasks = task_service.get_tasks_due_tomorrow()
+    today_urgent_tasks = task_service.get_tasks_due_today(username)
+    tomorrow_urgent_tasks = task_service.get_tasks_due_tomorrow(username)
     
     has_urgent = bool(today_urgent_tasks or tomorrow_urgent_tasks)
     
@@ -499,7 +562,7 @@ with tab1:
                         priority=task_priority,
                         status="Bekliyor"
                     )
-                    if task_service.add_task(new_task):
+                    if task_service.add_task(new_task, username):
                         st.success(f"'{task_title}' başarıyla eklendi!")
                         time.sleep(0.5)
                         st.rerun()
@@ -557,7 +620,7 @@ with tab1:
                 if task.status == "Bekliyor":
                     if st.button("✅ Tamamla", key=f"comp_{task.id}", use_container_width=True):
                         try:
-                            if task_service.complete_task(task.id):
+                            if task_service.complete_task(task.id, username):
                                 st.success("Tamamlandı!")
                                 time.sleep(0.5)
                                 st.rerun()
@@ -566,7 +629,7 @@ with tab1:
                             
                 if st.button("🗑️ Sil", key=f"del_task_{task.id}", use_container_width=True):
                     try:
-                        if task_service.delete_task(task.id):
+                        if task_service.delete_task(task.id, username):
                             st.warning("Silindi!")
                             time.sleep(0.5)
                             st.rerun()
@@ -593,7 +656,7 @@ with tab2:
                         content=note_content,
                         category=note_category
                     )
-                    if note_service.add_note(new_note):
+                    if note_service.add_note(new_note, username):
                         st.success("Not kaydedildi!")
                         time.sleep(0.5)
                         st.rerun()
@@ -606,7 +669,7 @@ with tab2:
     st.markdown("### 🗒️ Kayıtlı Notlarım")
     
     try:
-        all_notes = note_service.get_all_notes()
+        all_notes = note_service.get_all_notes(username)
     except Exception as e:
         all_notes = []
         st.error(f"Notlar alınırken hata oluştu: {e}")
@@ -634,7 +697,7 @@ with tab2:
                 st.write("")
                 if st.button("🗑️ Sil", key=f"del_note_{note.id}", use_container_width=True):
                     try:
-                        if note_service.delete_note(note.id):
+                        if note_service.delete_note(note.id, username):
                             st.warning("Silindi!")
                             time.sleep(0.5)
                             st.rerun()
